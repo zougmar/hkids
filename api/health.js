@@ -1,4 +1,4 @@
-import connectDB from '../lib/db.js';
+import connectDB from './lib/db.js';
 
 export default async function handler(req, res) {
   // Set CORS headers
