@@ -66,15 +66,15 @@ const ReadingInterface = () => {
 
   // If a book is open, show reading view
   if (selectedBook) {
-    const baseBackendURL = getBaseBackendURL();
-    const coverImage = selectedBook.coverImage?.startsWith('http') 
+    // Handle base64 images or URLs
+    const coverImage = selectedBook.coverImage?.startsWith('data:') || selectedBook.coverImage?.startsWith('http')
       ? selectedBook.coverImage 
-      : `${baseBackendURL}${selectedBook.coverImage}`;
+      : `${getBaseBackendURL()}${selectedBook.coverImage}`;
     
     const currentPageImage = selectedBook.pages?.[currentPage];
-    const pageImageUrl = currentPageImage?.startsWith('http')
+    const pageImageUrl = currentPageImage?.startsWith('data:') || currentPageImage?.startsWith('http')
       ? currentPageImage
-      : `${baseBackendURL}${currentPageImage}`;
+      : `${getBaseBackendURL()}${currentPageImage}`;
 
     return (
       <div className="fullscreen bg-gray-900 flex flex-col">
@@ -225,10 +225,10 @@ const ReadingInterface = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredBooks.map((book) => {
-              const baseBackendURL = getBaseBackendURL();
-              const coverImageUrl = book.coverImage?.startsWith('http')
+              // Handle base64 images or URLs
+              const coverImageUrl = book.coverImage?.startsWith('data:') || book.coverImage?.startsWith('http')
                 ? book.coverImage
-                : `${baseBackendURL}${book.coverImage}`;
+                : `${getBaseBackendURL()}${book.coverImage}`;
 
               return (
                 <motion.div

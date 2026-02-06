@@ -48,34 +48,56 @@ const BookForm = ({ book, onClose, onSuccess }) => {
     }
   };
 
+  // Convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('ageGroup', formData.ageGroup);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('fileType', formData.fileType);
-      formDataToSend.append('isPublished', formData.isPublished);
+      const dataToSend = {
+        title: formData.title,
+        description: formData.description,
+        ageGroup: formData.ageGroup,
+        category: formData.category,
+        fileType: formData.fileType,
+        isPublished: formData.isPublished
+      };
 
+      // Convert cover image to base64 if provided
       if (coverImage) {
-        formDataToSend.append('coverImage', coverImage);
+        dataToSend.coverImage = await fileToBase64(coverImage);
+      } else if (book && book.coverImage) {
+        // Keep existing cover image if not updating
+        dataToSend.coverImage = book.coverImage;
       }
 
-      pageImages.forEach((image, index) => {
-        formDataToSend.append('pages', image);
-      });
+      // Convert page images to base64 if provided
+      if (pageImages.length > 0) {
+        const base64Pages = await Promise.all(
+          pageImages.map(file => fileToBase64(file))
+        );
+        dataToSend.pages = base64Pages;
+      } else if (book && book.pages) {
+        // Keep existing pages if not updating
+        dataToSend.pages = book.pages;
+      }
 
       if (book) {
         // Update existing book
-        await booksAPI.updateBook(book._id, formDataToSend);
+        await booksAPI.updateBook(book._id, dataToSend);
       } else {
         // Create new book
-        await booksAPI.createBook(formDataToSend);
+        await booksAPI.createBook(dataToSend);
       }
 
       onSuccess();

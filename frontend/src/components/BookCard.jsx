@@ -4,10 +4,10 @@ import { getBaseBackendURL } from '../services/api';
 const BookCard = ({ book, onEdit, onDelete }) => {
   const [imageError, setImageError] = useState(false);
   
-  const baseBackendURL = getBaseBackendURL();
-  const coverImageUrl = book.coverImage?.startsWith('http')
+  // Handle base64 images or URLs
+  const coverImageUrl = book.coverImage?.startsWith('data:') || book.coverImage?.startsWith('http')
     ? book.coverImage
-    : `${baseBackendURL}${book.coverImage}`;
+    : `${getBaseBackendURL()}${book.coverImage}`;
 
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
