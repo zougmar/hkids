@@ -1,10 +1,28 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Determine API URL: use env var if set, otherwise use relative URL (same domain)
+// In production (Vercel), API routes are on the same domain, so we use relative URLs
+const getAPIURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // If no env var, use relative URL (works for same-domain API routes on Vercel)
+  // For local dev, this will fail, so we fall back to localhost
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000/api';
+  }
+  return '/api';
+};
+
+const API_URL = getAPIURL();
 
 // Get base backend URL (without /api) for serving images and static files
 export const getBaseBackendURL = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiUrl = getAPIURL();
+  // If it's a relative URL, return empty string (same domain)
+  if (apiUrl.startsWith('/')) {
+    return '';
+  }
   // Remove /api suffix if present
   return apiUrl.replace(/\/api\/?$/, '');
 };
