@@ -2,8 +2,16 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Get base backend URL (without /api) for serving images and static files
+export const getBaseBackendURL = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // Remove /api suffix if present
+  return apiUrl.replace(/\/api\/?$/, '');
+};
+
 // Log API URL for debugging
 console.log('🔗 API URL:', API_URL);
+console.log('🔗 Base Backend URL:', getBaseBackendURL());
 
 // Create axios instance
 const api = axios.create({
@@ -71,5 +79,8 @@ export const booksAPI = {
   // Admin - Delete book
   deleteBook: (id) => api.delete(`/books/${id}`)
 };
+
+// Health check
+export const healthCheck = () => api.get('/health');
 
 export default api;

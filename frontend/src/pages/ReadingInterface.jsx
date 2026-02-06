@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { booksAPI } from '../services/api';
+import { booksAPI, getBaseBackendURL } from '../services/api';
 import { Link } from 'react-router-dom';
 
 const ReadingInterface = () => {
@@ -66,15 +66,15 @@ const ReadingInterface = () => {
 
   // If a book is open, show reading view
   if (selectedBook) {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const baseBackendURL = getBaseBackendURL();
     const coverImage = selectedBook.coverImage?.startsWith('http') 
       ? selectedBook.coverImage 
-      : `${API_URL}${selectedBook.coverImage}`;
+      : `${baseBackendURL}${selectedBook.coverImage}`;
     
     const currentPageImage = selectedBook.pages?.[currentPage];
     const pageImageUrl = currentPageImage?.startsWith('http')
       ? currentPageImage
-      : `${API_URL}${currentPageImage}`;
+      : `${baseBackendURL}${currentPageImage}`;
 
     return (
       <div className="fullscreen bg-gray-900 flex flex-col">
@@ -225,10 +225,10 @@ const ReadingInterface = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredBooks.map((book) => {
-              const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+              const baseBackendURL = getBaseBackendURL();
               const coverImageUrl = book.coverImage?.startsWith('http')
                 ? book.coverImage
-                : `${API_URL}${book.coverImage}`;
+                : `${baseBackendURL}${book.coverImage}`;
 
               return (
                 <motion.div

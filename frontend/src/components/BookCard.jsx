@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { getBaseBackendURL } from '../services/api';
 
 const BookCard = ({ book, onEdit, onDelete }) => {
   const [imageError, setImageError] = useState(false);
   
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const baseBackendURL = getBaseBackendURL();
   const coverImageUrl = book.coverImage?.startsWith('http')
     ? book.coverImage
-    : `${API_URL}${book.coverImage}`;
+    : `${baseBackendURL}${book.coverImage}`;
 
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden">

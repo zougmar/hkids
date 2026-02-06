@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
-import api from '../services/api';
+import { healthCheck } from '../services/api';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -16,14 +16,10 @@ const AdminLogin = () => {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        // Health endpoint is at /api/health
-        const response = await fetch('http://localhost:5000/api/health');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'OK') {
-            setBackendStatus('connected');
-            return;
-          }
+        const response = await healthCheck();
+        if (response.data?.status === 'OK') {
+          setBackendStatus('connected');
+          return;
         }
         setBackendStatus('disconnected');
       } catch (error) {
