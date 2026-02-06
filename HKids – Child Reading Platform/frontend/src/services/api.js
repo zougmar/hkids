@@ -1,0 +1,75 @@
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Log API URL for debugging
+console.log('🔗 API URL:', API_URL);
+
+// Create axios instance
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add token to requests if available
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/admin/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authAPI = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  register: (username, email, password) => api.post('/auth/register', { username, email, password }),
+  getProfile: () => api.get('/auth/profile')
+};
+
+// Books API
+export const booksAPI = {
+  // Public - Get published books
+  getPublishedBooks: (params = {}) => api.get('/books/published', { params }),
+  
+  // Admin - Get all books
+  getAllBooks: () => api.get('/books'),
+  
+  // Admin - Get single book
+  getBookById: (id) => api.get(`/books/${id}`),
+  
+  // Admin - Create book
+  createBook: (formData) => api.post('/books', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  
+  // Admin - Update book
+  updateBook: (id, formData) => api.put(`/books/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  
+  // Admin - Delete book
+  deleteBook: (id) => api.delete(`/books/${id}`)
+};
+
+export default api;

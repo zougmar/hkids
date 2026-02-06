@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 HKids API Connection Test</h1>
+    
+    <div class="info test-result">
+        <strong>Instructions:</strong> Click the buttons below to test your backend connection.
+    </div>
+    
+    <button onclick="testHealth()">Test Health Endpoint</button>
+    <button onclick="testLogin()">Test Login Endpoint</button>
+    <button onclick="testAll()">Test All</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        function addResult(message, type) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+        
+        async function testHealth() {
+            addResult('Testing /api/health...', 'info');
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                if (response.ok) {
+                    addResult(`✅ Health Check: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Health Check Failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Health Check Error: ${error.message}<br>Make sure backend is running on port 5000!`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            addResult('Testing /api/auth/login with admin credentials...', 'info');
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@hkids.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Login Success!<br>Token received: ${data.token ? 'Yes' : 'No'}<br>User: ${data.user?.username || 'N/A'}`, 'success');
+                } else {
+                    addResult(`❌ Login Failed: ${data.message || response.statusText}<br>Response: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Login Error: ${error.message}<br>Check if backend is running and MongoDB is connected!`, 'error');
+            }
+        }
+        
+        async function testAll() {
+            document.getElementById('results').innerHTML = '';
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testLogin();
+        }
+        
+        // Auto-run on load
+        window.onload = () => {
+            addResult('Ready to test! Click buttons above or wait for auto-test...', 'info');
+            setTimeout(testAll, 1000);
+        };
+    </script>
+</body>
+</html>

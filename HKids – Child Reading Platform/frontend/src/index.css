@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Child-friendly button styles */
+.btn-large {
+  @apply px-8 py-4 text-2xl font-semibold rounded-2xl transition-all duration-200;
+  min-height: 60px;
+  min-width: 120px;
+}
+
+.btn-large:hover {
+  transform: scale(1.05);
+}
+
+.btn-large:active {
+  transform: scale(0.95);
+}
+
+/* Full-screen container */
+.fullscreen {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Page flip animation container */
+.page-container {
+  perspective: 1500px;
+}
