@@ -1,23 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getBaseBackendURL } from '../services/api';
 
 const BookCard = ({ book, onEdit, onDelete }) => {
   const [imageError, setImageError] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState(null);
   
-  // Handle base64 images or URLs
-  const coverImageUrl = book.coverImage?.startsWith('data:') || book.coverImage?.startsWith('http')
-    ? book.coverImage
-    : `${getBaseBackendURL()}${book.coverImage}`;
+  useEffect(() => {
+    if (!book.coverImage) {
+      setCoverImageUrl(null);
+      return;
+    }
+    
+    // Check if it's a base64 data URL
+    if (book.coverImage.startsWith('data:image/') || book.coverImage.startsWith('data:application/')) {
+      setCoverImageUrl(book.coverImage);
+      return;
+    }
+    
+    // Check if it's a full URL
+    if (book.coverImage.startsWith('http://') || book.coverImage.startsWith('https://')) {
+      setCoverImageUrl(book.coverImage);
+      return;
+    }
+    
+    // Check if it might be base64 without data: prefix (fix it)
+    if (book.coverImage.startsWith('/9j/') || book.coverImage.startsWith('iVBORw0KGgo')) {
+      // It's base64 JPEG or PNG without prefix, add it
+      const mimeType = book.coverImage.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+      setCoverImageUrl(`data:${mimeType};base64,${book.coverImage}`);
+      return;
+    }
+    
+    // Otherwise, treat as relative path
+    const baseUrl = getBaseBackendURL();
+    if (baseUrl) {
+      setCoverImageUrl(`${baseUrl}${book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage}`);
+    } else {
+      setCoverImageUrl(book.coverImage.startsWith('/') ? book.coverImage : `/${book.coverImage}`);
+    }
+  }, [book.coverImage]);
 
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
       <div className="relative">
-        {!imageError ? (
+        {!imageError && coverImageUrl ? (
           <img
             src={coverImageUrl}
             alt={book.title}
             className="w-full h-64 object-cover"
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              console.error('Image load error:', {
+                src: coverImageUrl,
+                bookId: book._id,
+                coverImage: book.coverImage?.substring(0, 50)
+              });
+              setImageError(true);
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', book.title);
+            }}
           />
         ) : (
           <div className="w-full h-64 bg-gradient-to-br from-primary-blue to-primary-green flex items-center justify-center text-6xl">

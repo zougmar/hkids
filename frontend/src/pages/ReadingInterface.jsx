@@ -66,15 +66,34 @@ const ReadingInterface = () => {
 
   // If a book is open, show reading view
   if (selectedBook) {
-    // Handle base64 images or URLs
-    const coverImage = selectedBook.coverImage?.startsWith('data:') || selectedBook.coverImage?.startsWith('http')
-      ? selectedBook.coverImage 
-      : `${getBaseBackendURL()}${selectedBook.coverImage}`;
+    // Helper to normalize image URLs
+    const normalizeImageUrl = (imageUrl) => {
+      if (!imageUrl) return null;
+      
+      // Base64 data URL
+      if (imageUrl.startsWith('data:image/') || imageUrl.startsWith('data:application/')) {
+        return imageUrl;
+      }
+      
+      // Full URL
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+      }
+      
+      // Base64 without prefix (fix it)
+      if (imageUrl.startsWith('/9j/') || imageUrl.startsWith('iVBORw0KGgo')) {
+        const mimeType = imageUrl.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+        return `data:${mimeType};base64,${imageUrl}`;
+      }
+      
+      // Relative path
+      const baseUrl = getBaseBackendURL();
+      return baseUrl ? `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}` : imageUrl;
+    };
     
+    const coverImage = normalizeImageUrl(selectedBook.coverImage);
     const currentPageImage = selectedBook.pages?.[currentPage];
-    const pageImageUrl = currentPageImage?.startsWith('data:') || currentPageImage?.startsWith('http')
-      ? currentPageImage
-      : `${getBaseBackendURL()}${currentPageImage}`;
+    const pageImageUrl = normalizeImageUrl(currentPageImage);
 
     return (
       <div className="fullscreen bg-gray-900 flex flex-col">
@@ -226,9 +245,31 @@ const ReadingInterface = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredBooks.map((book) => {
               // Handle base64 images or URLs
-              const coverImageUrl = book.coverImage?.startsWith('data:') || book.coverImage?.startsWith('http')
-                ? book.coverImage
-                : `${getBaseBackendURL()}${book.coverImage}`;
+              const getCoverImageUrl = () => {
+                if (!book.coverImage) return null;
+                
+                // Base64 data URL
+                if (book.coverImage.startsWith('data:image/') || book.coverImage.startsWith('data:application/')) {
+                  return book.coverImage;
+                }
+                
+                // Full URL
+                if (book.coverImage.startsWith('http://') || book.coverImage.startsWith('https://')) {
+                  return book.coverImage;
+                }
+                
+                // Base64 without prefix (fix it)
+                if (book.coverImage.startsWith('/9j/') || book.coverImage.startsWith('iVBORw0KGgo')) {
+                  const mimeType = book.coverImage.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+                  return `data:${mimeType};base64,${book.coverImage}`;
+                }
+                
+                // Relative path
+                const baseUrl = getBaseBackendURL();
+                return baseUrl ? `${baseUrl}${book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage}` : book.coverImage;
+              };
+              
+              const coverImageUrl = getCoverImageUrl();
 
               return (
                 <motion.div
@@ -241,11 +282,21 @@ const ReadingInterface = () => {
                     openBook(book);
                   }}
                 >
-                  <img
-                    src={coverImageUrl}
-                    alt={book.title}
-                    className="w-full h-64 object-cover rounded-2xl mb-4"
-                  />
+                  {coverImageUrl ? (
+                    <img
+                      src={coverImageUrl}
+                      alt={book.title}
+                      className="w-full h-64 object-cover rounded-2xl mb-4"
+                      onError={(e) => {
+                        console.error('Image load error for book:', book.title, coverImageUrl?.substring(0, 50));
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-64 bg-gradient-to-br from-primary-blue to-primary-green flex items-center justify-center rounded-2xl mb-4 text-6xl">
+                      📚
+                    </div>
+                  )}
                   <h3 className="text-2xl font-bold mb-2">{book.title}</h3>
                   <p className="text-gray-600 mb-3 line-clamp-2">{book.description}</p>
                   <div className="flex gap-2">

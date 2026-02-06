@@ -53,8 +53,16 @@ const BookForm = ({ book, onClose, onSuccess }) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
+      reader.onload = () => {
+        // reader.result is already in format: "data:image/jpeg;base64,/9j/4AAQ..."
+        const result = reader.result;
+        console.log('File converted to base64, length:', result.length);
+        resolve(result);
+      };
+      reader.onerror = (error) => {
+        console.error('Error converting file to base64:', error);
+        reject(error);
+      };
     });
   };
 
