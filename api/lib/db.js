@@ -17,9 +17,16 @@ async function connectDB() {
       bufferCommands: false,
     };
 
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+
     cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
       console.log('✅ MongoDB connected');
       return mongoose;
+    }).catch((error) => {
+      console.error('❌ MongoDB connection error:', error.message);
+      throw error;
     });
   }
 

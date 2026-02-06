@@ -18,8 +18,19 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    res.json({ status: 'OK', message: 'HKids API is running' });
+    res.json({ 
+      status: 'OK', 
+      message: 'HKids API is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
   } catch (error) {
-    res.status(500).json({ status: 'ERROR', message: 'Database connection failed', error: error.message });
+    console.error('Health check error:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: 'Database connection failed', 
+      error: error.message,
+      hint: 'Check MONGODB_URI environment variable'
+    });
   }
 }

@@ -3,14 +3,17 @@ import axios from 'axios';
 // Determine API URL: use env var if set, otherwise use relative URL (same domain)
 // In production (Vercel), API routes are on the same domain, so we use relative URLs
 const getAPIURL = () => {
+  // Always use VITE_API_URL if explicitly set
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // If no env var, use relative URL (works for same-domain API routes on Vercel)
-  // For local dev, this will fail, so we fall back to localhost
-  if (import.meta.env.DEV) {
+  
+  // In development mode (Vite dev server), use localhost
+  if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
     return 'http://localhost:5000/api';
   }
+  
+  // In production (Vercel), use relative URL
   return '/api';
 };
 
@@ -36,7 +39,8 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 10000 // 10 second timeout
 });
 
 // Add token to requests if available
@@ -57,6 +61,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log detailed error for debugging
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏱️ Request timeout - API took too long to respond');
+    } else if (error.code === 'ERR_NETWORK') {
+      console.error('🌐 Network error - Cannot reach API server');
+      console.error('API URL:', API_URL);
+    } else if (error.response) {
+      console.error('📡 API Error:', error.response.status, error.response.data);
+    } else {
+      console.error('❌ Request error:', error.message);
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

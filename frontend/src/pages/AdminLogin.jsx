@@ -24,6 +24,12 @@ const AdminLogin = () => {
         setBackendStatus('disconnected');
       } catch (error) {
         console.error('Backend check failed:', error);
+        console.error('Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          url: error.config?.url
+        });
         setBackendStatus('disconnected');
       }
     };
@@ -69,12 +75,16 @@ const AdminLogin = () => {
         )}
         {backendStatus === 'disconnected' && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-xl text-sm">
-            ⚠️ Cannot connect to backend server. Please make sure:
+            ⚠️ Cannot connect to backend server. Please check:
             <ul className="list-disc list-inside mt-2 ml-2">
-              <li>Backend is running on port 5000</li>
-              <li>MongoDB is connected</li>
-              <li>Check browser console for details</li>
+              <li>API routes are deployed correctly</li>
+              <li>MongoDB connection is configured</li>
+              <li>Environment variables are set in Vercel</li>
+              <li>Check browser console (F12) for error details</li>
             </ul>
+            <p className="mt-2 text-xs">
+              Try visiting: <code className="bg-red-200 px-1 rounded">/api/health</code> directly
+            </p>
           </div>
         )}
         {backendStatus === 'connected' && (
