@@ -24,12 +24,20 @@ const AdminLogin = () => {
         setBackendStatus('disconnected');
       } catch (error) {
         console.error('Backend check failed:', error);
+        const errorData = error.response?.data;
         console.error('Error details:', {
           message: error.message,
-          response: error.response?.data,
           status: error.response?.status,
+          error: errorData?.error,
+          hint: errorData?.hint,
           url: error.config?.url
         });
+        
+        // Show specific error message if available
+        if (errorData?.hint) {
+          console.error('💡 Hint:', errorData.hint);
+        }
+        
         setBackendStatus('disconnected');
       }
     };

@@ -21,11 +21,23 @@ async function connectDB() {
       throw new Error('MONGODB_URI environment variable is not set');
     }
 
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
-      console.log('✅ MongoDB connected');
+    const connectionString = process.env.MONGODB_URI;
+    
+    // Add connection timeout
+    opts.serverSelectionTimeoutMS = 10000; // 10 seconds
+    opts.socketTimeoutMS = 45000; // 45 seconds
+    
+    cached.promise = mongoose.connect(connectionString, opts).then((mongoose) => {
+      console.log('✅ MongoDB connected successfully');
+      console.log('Database:', mongoose.connection.db?.databaseName);
       return mongoose;
     }).catch((error) => {
-      console.error('❌ MongoDB connection error:', error.message);
+      console.error('❌ MongoDB connection error:', {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        connectionString: connectionString ? `${connectionString.substring(0, 20)}...` : 'undefined'
+      });
       throw error;
     });
   }
