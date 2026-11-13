@@ -1,284 +1,188 @@
-# 📚 HKids – Child Reading Platform
+# HKids — Digital Reading Platform
 
-A complete digital reading platform designed for young children, featuring a distraction-free reading interface and a secure content management system for administrators.
+A modern digital library for kids, teens, and adults. Visitors choose an age group first, then browse and read books with a real page-flip experience. Admins upload PDF or image books from a secure dashboard.
 
-## 🎯 Features
+**Live site:** [https://hkids.vercel.app](https://hkids.vercel.app)
 
-### Child Reading Interface
-- **Full-screen distraction-free UI** - Immersive reading experience
-- **Page flip animations** - Smooth transitions using Framer Motion
-- **Large, child-friendly buttons** - Easy navigation for young users
-- **Category & age group filtering** - Find books by age (3-5, 6-8, 9-12) and category
-- **No ads, no external links** - Safe, focused reading environment
+## Features
 
-### Admin Dashboard
-- **Secure authentication** - JWT-based admin login
-- **Book management** - Upload, edit, delete books
-- **Content organization** - Categorize by age group and category
-- **Publish control** - Toggle book visibility (published/unpublished)
-- **File upload** - Support for PDF and image formats
+### Reading experience
+- Age-first homepage (no mixed age libraries)
+- Age groups: **3–5**, **6–8**, **9–12**, **13–15**, **Adults +16**
+- Flip-book reader with previous/next controls and fullscreen mode
+- Category + search filters within the selected age group
+- Selected age is remembered (URL + browser storage)
 
-## 🛠️ Tech Stack
+### Admin
+- Secure JWT login
+- Upload books as **PDF** (auto-converted to pages) or page images
+- Age group, category, cover, and publish controls
+- Edit / delete books from the dashboard
 
-### Frontend
-- **React.js** (Vite) - Modern React with fast build tooling
-- **Tailwind CSS** - Utility-first CSS framework
-- **Framer Motion** - Smooth page flip animations
-- **React Router** - Client-side routing
-- **Axios** - HTTP client for API calls
+## Tech stack
 
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **MongoDB** (Mongoose) - NoSQL database
-- **JWT** - Secure authentication
-- **Multer** - File upload handling
+| Layer | Stack |
+| --- | --- |
+| Frontend | React (Vite), Tailwind CSS, Framer Motion, Lucide React, pdf.js, react-pageflip |
+| Backend (local) | Node.js, Express, Multer |
+| API (Vercel) | Serverless functions in `/api` |
+| Database | MongoDB Atlas + Mongoose |
+| Auth | JWT + bcrypt |
 
-## 📁 Project Structure
+## Project structure
 
 ```
-HKids – Child Reading Platform/
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable React components
-│   │   ├── pages/           # Page components
-│   │   ├── services/         # API and auth services
-│   │   ├── assets/          # Static assets
-│   │   ├── App.jsx          # Main app component
-│   │   └── main.jsx         # Entry point
-│   ├── package.json
-│   └── vite.config.js
-├── backend/
-│   ├── controllers/         # Request handlers
-│   ├── models/              # MongoDB schemas
-│   ├── routes/              # API routes
-│   ├── middleware/          # Auth middleware
-│   ├── uploads/             # Uploaded book files
-│   ├── server.js            # Express server
-│   └── package.json
-├── README.md
-└── architecture.md
+hkids/
+├── frontend/          # React app (Vite)
+├── backend/           # Express API for local development
+├── api/               # Vercel serverless API routes
+├── vercel.json        # Vercel build + rewrite config
+└── README.md
 ```
 
-## 🚀 Getting Started
+## Local development
 
 ### Prerequisites
+- Node.js 18+
+- MongoDB Atlas (recommended) or local MongoDB
 
-- **Node.js** (v18 or higher)
-- **MongoDB** (local installation or MongoDB Atlas)
-- **npm** or **yarn**
+### Install
 
-### Installation
+```bash
+npm run install:all
+```
 
-1. **Clone the repository**
-   ```bash
-   cd "HKids – Child Reading Platform"
-   ```
+### Environment
 
-2. **Install backend dependencies**
-   ```bash
-   cd backend
-   npm install
-   ```
+Create `backend/.env`:
 
-3. **Install frontend dependencies**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+```env
+MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/HKids?retryWrites=true&w=majority
+JWT_SECRET=your_long_random_secret
+PORT=5000
+FRONTEND_URL=http://localhost:5173
+```
 
-4. **Configure environment variables**
+Create `frontend/.env` (optional in local Vite; defaults to `http://localhost:5000/api`):
 
-   Backend: Create `backend/.env` from `backend/.env.example`
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/hkids
-   JWT_SECRET=your_super_secret_jwt_key_change_in_production
-   PORT=5000
-   FRONTEND_URL=http://localhost:5173
-   ```
+```env
+VITE_API_URL=http://localhost:5000/api
+```
 
-   Frontend: Create `frontend/.env` from `frontend/.env.example`
-   ```env
-   VITE_API_URL=http://localhost:5000/api
-   ```
+> Never commit real `.env` files. Keep secrets only in local env / Vercel project settings.
 
-5. **Start MongoDB**
-   
-   If using local MongoDB:
-   ```bash
-   mongod
-   ```
-   
-   Or use MongoDB Atlas (cloud) and update `MONGODB_URI` in `.env`
+### Run
 
-6. **Seed the database** (optional)
-   ```bash
-   cd backend
-   npm run seed
-   ```
-   
-   This creates a sample admin account and books:
-   - **Email:** admin@hkids.com
-   - **Password:** admin123
+```bash
+# Terminal 1 — API
+cd backend
+npm run dev
 
-7. **Start the backend server**
-   ```bash
-   cd backend
-   npm run dev
-   ```
-   
-   Server runs on `http://localhost:5000`
+# Terminal 2 — UI
+cd frontend
+npm run dev
+```
 
-8. **Start the frontend development server**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   
-   Frontend runs on `http://localhost:5173`
+- App: http://localhost:5173  
+- API: http://localhost:5000  
 
-## 📖 Usage
+### Seed sample data (optional)
 
-### For Children (Reading Interface)
+```bash
+cd backend
+npm run seed
+```
 
-1. Navigate to `http://localhost:5173`
-2. Click **"Start Reading"**
-3. Filter books by age group and category
-4. Click on a book to open it
-5. Use **Previous** and **Next** buttons or swipe to navigate pages
-6. Click **Back** to return to book selection
+Default admin (local seed only):
+- Email: `admin@hkids.com`
+- Password: `admin123`
 
-### For Administrators
+## Deploy to Vercel
 
-1. Navigate to `http://localhost:5173/admin/login`
-2. Login with admin credentials:
-   - Email: `admin@hkids.com`
-   - Password: `admin123`
-3. **Add a new book:**
-   - Click **"+ Add Book"**
-   - Fill in book details (title, description, age group, category)
-   - Upload cover image
-   - Upload page images (multiple files)
-   - Toggle "Publish immediately" if you want it visible to children
-   - Click **"Create Book"**
-4. **Edit a book:**
-   - Click **"Edit"** on any book card
-   - Modify fields and upload new images if needed
-   - Click **"Update Book"**
-5. **Delete a book:**
-   - Click **"Delete"** on any book card
-   - Confirm deletion
+This repo is set up as a **single Vercel project**:
+- Frontend build from `frontend/`
+- API from `/api/*` serverless functions
+- MongoDB Atlas for data
 
-## 🔒 Security Features
+### 1) Push to GitHub
 
-- JWT-based authentication for admin access
-- Password hashing with bcrypt
-- Protected API routes (admin-only endpoints)
-- File upload validation (images and PDFs only)
-- CORS configuration for secure cross-origin requests
+```bash
+git add .
+git commit -m "Update platform and README for Vercel"
+git push origin main
+```
 
-## 🎨 Design Principles
+### 2) Import / connect on Vercel
 
-- **Child-friendly colors:** Soft blue, green, and orange
-- **Large, readable fonts:** Easy for children to read
-- **Rounded corners:** Friendly, approachable design
-- **Simple navigation:** Large buttons, clear icons
-- **Distraction-free:** No ads, no external links
+1. Go to [vercel.com](https://vercel.com) and import the `hkids` GitHub repo (or reconnect if already imported).
+2. Keep root directory empty (project root).
+3. Vercel will use `vercel.json` for build/output settings.
 
-## 📝 API Endpoints
+### 3) Set environment variables (required)
 
-### Public Endpoints
-- `GET /api/books/published` - Get all published books
-- `GET /api/health` - Health check
+In **Vercel → Project → Settings → Environment Variables**, add for Production (and Preview):
 
-### Auth Endpoints
-- `POST /api/auth/register` - Register new admin
-- `POST /api/auth/login` - Admin login
-- `GET /api/auth/profile` - Get current user (protected)
+```env
+MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/HKids?retryWrites=true&w=majority
+JWT_SECRET=your_long_random_secret
+FRONTEND_URL=https://hkids.vercel.app
+NODE_ENV=production
+```
 
-### Book Endpoints (Admin Only)
-- `GET /api/books` - Get all books
-- `GET /api/books/:id` - Get single book
-- `POST /api/books` - Create new book
-- `PUT /api/books/:id` - Update book
-- `DELETE /api/books/:id` - Delete book
+Important:
+- Use the **same Atlas user/password** that works locally.
+- Database name should match (`HKids`).
+- In Atlas → **Network Access**, allow `0.0.0.0/0` so Vercel can connect.
+- After changing env vars, **Redeploy**.
 
-## 🧪 Development
+### 4) Verify deployment
 
-### Backend Scripts
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run seed` - Seed database with sample data
+- Site: https://hkids.vercel.app  
+- Health: https://hkids.vercel.app/api/health  
+  Expected: `"status":"OK"` and `"mongodb":"connected"`  
+- Admin: https://hkids.vercel.app/admin/login  
 
-### Frontend Scripts
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
+If login shows **Server error during login** / `bad auth`, the Vercel `MONGODB_URI` username/password is wrong or outdated.
 
-## 🚢 Production Deployment
+## Usage
 
-1. **Build the frontend:**
-   ```bash
-   cd frontend
-   npm run build
-   ```
+### Readers
+1. Open the homepage
+2. Choose an age group
+3. Browse only books for that age
+4. Open a book and flip pages (or use fullscreen)
 
-2. **Set production environment variables:**
-   - Update `MONGODB_URI` to production database
-   - Set strong `JWT_SECRET`
-   - Configure `FRONTEND_URL` for production domain
+### Admins
+1. Open `/admin/login`
+2. Sign in
+3. Add a book (PDF recommended), set age group, publish
 
-3. **Serve frontend:**
-   - Deploy `frontend/dist` to a static hosting service (Vercel, Netlify, etc.)
-   - Or serve via Express static middleware
+## API overview
 
-4. **Deploy backend:**
-   - Deploy to services like Heroku, Railway, or AWS
-   - Ensure MongoDB is accessible
-   - Configure environment variables
+### Public
+- `GET /api/health`
+- `GET /api/books/published?ageGroup=3-5`
 
-## 🔮 Future Enhancements
+### Auth
+- `POST /api/auth/login`
+- `GET /api/auth/profile` (protected)
 
-The architecture is designed to support:
-- **Audio narration** - Text-to-speech or recorded audio
-- **Parental dashboard** - Track reading progress, set time limits
-- **Reading analytics** - Track which books are popular
-- **Multi-language support** - Books in different languages
-- **Offline mode** - PWA support for offline reading
+### Books (admin)
+- `GET /api/books`
+- `POST /api/books`
+- `PUT /api/books/:id`
+- `DELETE /api/books/:id`
 
-## 📄 License
+## Troubleshooting
 
-This project is a Proof of Concept (POC) for educational purposes.
+| Issue | Fix |
+| --- | --- |
+| White screen locally | Restart Vite; ensure Tailwind/CSS builds without errors |
+| Login server error on Vercel | Fix `MONGODB_URI` credentials + redeploy |
+| Health check DB timeout | Atlas Network Access must allow `0.0.0.0/0` |
+| CORS issues | Set `FRONTEND_URL` to your exact Vercel domain |
+| No books for an age | Publish books for that age group in admin |
 
-## 👥 Contributing
+## License
 
-This is a POC project. For production use, consider:
-- Adding comprehensive error handling
-- Implementing rate limiting
-- Adding input validation and sanitization
-- Setting up automated testing
-- Adding CI/CD pipeline
-- Implementing proper logging
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Issues
-- Ensure MongoDB is running: `mongod` or check MongoDB Atlas connection string
-- Verify `MONGODB_URI` in `.env` is correct
-
-### Port Already in Use
-- Change `PORT` in backend `.env`
-- Update `VITE_API_URL` in frontend `.env` accordingly
-
-### File Upload Issues
-- Ensure `backend/uploads` directory exists and is writable
-- Check file size limits (default: 10MB)
-- Verify file types (images and PDFs only)
-
-### CORS Errors
-- Ensure `FRONTEND_URL` in backend `.env` matches your frontend URL
-- Check that frontend is making requests to correct API URL
-
----
-
-**Built with ❤️ for young readers**
+Proof of concept / educational project.
