@@ -14,7 +14,7 @@ const bookSchema = new mongoose.Schema({
   ageGroup: {
     type: String,
     required: [true, 'Age group is required'],
-    enum: ['3-5', '6-8', '9-12'],
+    enum: ['3-5', '6-8', '9-12', '13-15', '16+'],
     default: '3-5'
   },
   category: {

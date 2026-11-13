@@ -1,37 +1,35 @@
 import { useState, useEffect } from 'react';
+import { BookOpen, Pencil, Trash2, Layers } from 'lucide-react';
 import { getBaseBackendURL } from '../services/api';
+import { getAgeGroup } from '../constants/ageGroups';
+import { AgeIcon } from './AgeIcons';
 
 const BookCard = ({ book, onEdit, onDelete }) => {
   const [imageError, setImageError] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState(null);
-  
+
   useEffect(() => {
     if (!book.coverImage) {
       setCoverImageUrl(null);
       return;
     }
-    
-    // Check if it's a base64 data URL
+
     if (book.coverImage.startsWith('data:image/') || book.coverImage.startsWith('data:application/')) {
       setCoverImageUrl(book.coverImage);
       return;
     }
-    
-    // Check if it's a full URL
+
     if (book.coverImage.startsWith('http://') || book.coverImage.startsWith('https://')) {
       setCoverImageUrl(book.coverImage);
       return;
     }
-    
-    // Check if it might be base64 without data: prefix (fix it)
+
     if (book.coverImage.startsWith('/9j/') || book.coverImage.startsWith('iVBORw0KGgo')) {
-      // It's base64 JPEG or PNG without prefix, add it
       const mimeType = book.coverImage.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
       setCoverImageUrl(`data:${mimeType};base64,${book.coverImage}`);
       return;
     }
-    
-    // Otherwise, treat as relative path
+
     const baseUrl = getBaseBackendURL();
     if (baseUrl) {
       setCoverImageUrl(`${baseUrl}${book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage}`);
@@ -40,77 +38,69 @@ const BookCard = ({ book, onEdit, onDelete }) => {
     }
   }, [book.coverImage]);
 
+  const ageMeta = getAgeGroup(book.ageGroup);
+
   return (
-    <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-      <div className="relative">
+    <article className="surface-panel overflow-hidden">
+      <div className="relative h-52 bg-ink-100">
         {!imageError && coverImageUrl ? (
           <img
             src={coverImageUrl}
             alt={book.title}
-            className="w-full h-64 object-cover"
-            onError={(e) => {
-              console.error('Image load error:', {
-                src: coverImageUrl,
-                bookId: book._id,
-                coverImage: book.coverImage?.substring(0, 50)
-              });
-              setImageError(true);
-            }}
-            onLoad={() => {
-              console.log('Image loaded successfully:', book.title);
-            }}
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-64 bg-gradient-to-br from-primary-blue to-primary-green flex items-center justify-center text-6xl">
-            📚
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+            <BookOpen className="w-12 h-12" />
           </div>
         )}
-        <div className="absolute top-4 right-4">
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              book.isPublished
-                ? 'bg-primary-green text-white'
-                : 'bg-gray-400 text-white'
-            }`}
-          >
-            {book.isPublished ? 'Published' : 'Draft'}
-          </span>
-        </div>
+        <span
+          className={`absolute top-3 right-3 chip ${
+            book.isPublished
+              ? 'bg-accent-leaf text-white'
+              : 'bg-ink-500 text-white'
+          }`}
+        >
+          {book.isPublished ? 'Published' : 'Draft'}
+        </span>
       </div>
 
-      <div className="p-6">
-        <h3 className="text-2xl font-bold mb-2">{book.title}</h3>
-        <p className="text-gray-600 mb-4 line-clamp-2">{book.description}</p>
+      <div className="p-5">
+        <h3 className="font-display text-xl font-bold text-ink-900 mb-2">{book.title}</h3>
+        <p className="text-ink-500 mb-4 line-clamp-2 text-sm">{book.description}</p>
 
-        <div className="flex gap-2 mb-4">
-          <span className="px-3 py-1 bg-primary-blue text-white rounded-full text-sm">
-            Ages {book.ageGroup}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="chip bg-brand-50 text-brand-700">
+            <AgeIcon ageId={book.ageGroup} className="w-3.5 h-3.5" />
+            {ageMeta?.label || book.ageGroup}
           </span>
-          <span className="px-3 py-1 bg-primary-green text-white rounded-full text-sm">
-            {book.category}
-          </span>
+          <span className="chip bg-ink-100 text-ink-700">{book.category}</span>
         </div>
 
-        <div className="text-sm text-gray-500 mb-4">
+        <div className="text-sm text-ink-500 mb-4 flex items-center gap-1.5">
+          <Layers className="w-4 h-4" />
           {book.pages?.length || 0} pages
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(book)}
-            className="flex-1 px-4 py-2 bg-primary-blue text-white rounded-xl hover:bg-blue-600 transition"
+            className="flex-1 btn-primary btn-large text-base min-h-0 py-2.5"
           >
+            <Pencil className="w-4 h-4" />
             Edit
           </button>
           <button
             onClick={() => onDelete(book._id)}
-            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
+            className="flex-1 btn-large text-base min-h-0 py-2.5 bg-red-500 text-white hover:bg-red-600"
           >
+            <Trash2 className="w-4 h-4" />
             Delete
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

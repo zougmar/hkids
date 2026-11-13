@@ -1,318 +1,281 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Home as HomeIcon,
+  Library,
+  Search,
+  BookOpen,
+  Filter,
+  RefreshCcw
+} from 'lucide-react';
 import { booksAPI, getBaseBackendURL } from '../services/api';
-import { Link } from 'react-router-dom';
+import FlipBookReader from '../components/FlipBookReader';
+import { AgeIcon } from '../components/AgeIcons';
+import {
+  AGE_GROUPS,
+  getAgeGroup,
+  loadSelectedAge,
+  saveSelectedAge,
+  AGE_GROUP_IDS
+} from '../constants/ageGroups';
 
 const ReadingInterface = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const ageFromUrl = searchParams.get('age');
+  const selectedAge = AGE_GROUP_IDS.includes(ageFromUrl)
+    ? ageFromUrl
+    : loadSelectedAge();
+
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBooks();
-  }, [selectedAgeGroup, selectedCategory]);
+    if (!selectedAge) {
+      navigate('/', { replace: true });
+      return;
+    }
 
-  const fetchBooks = async () => {
+    if (ageFromUrl !== selectedAge) {
+      saveSelectedAge(selectedAge);
+      setSearchParams({ age: selectedAge }, { replace: true });
+    }
+  }, [selectedAge, ageFromUrl, navigate, setSearchParams]);
+
+  useEffect(() => {
+    if (!selectedAge) return;
+    fetchBooks(selectedAge);
+  }, [selectedAge]);
+
+  const fetchBooks = async (ageGroup) => {
     try {
       setLoading(true);
-      const params = {};
-      if (selectedAgeGroup) params.ageGroup = selectedAgeGroup;
-      if (selectedCategory) params.category = selectedCategory;
-      
-      const response = await booksAPI.getPublishedBooks(params);
-      setBooks(response.data);
+      const response = await booksAPI.getPublishedBooks({ ageGroup });
+      setBooks(response.data || []);
     } catch (error) {
       console.error('Error fetching books:', error);
+      setBooks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const openBook = (book) => {
-    setSelectedBook(book);
-    setCurrentPage(0);
-  };
+  const ageMeta = getAgeGroup(selectedAge);
 
-  const closeBook = () => {
-    setSelectedBook(null);
-    setCurrentPage(0);
-  };
+  const categories = useMemo(
+    () => [...new Set(books.map((book) => book.category).filter(Boolean))],
+    [books]
+  );
 
-  const nextPage = () => {
-    if (selectedBook && currentPage < selectedBook.pages.length - 1) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  // Get unique categories
-  const categories = [...new Set(books.map(book => book.category))];
-  const ageGroups = ['3-5', '6-8', '9-12'];
-
-  // Filter books based on selections
-  const filteredBooks = books.filter(book => {
-    if (selectedAgeGroup && book.ageGroup !== selectedAgeGroup) return false;
+  const filteredBooks = books.filter((book) => {
+    if (book.ageGroup !== selectedAge) return false;
     if (selectedCategory && book.category !== selectedCategory) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const hay = `${book.title} ${book.description} ${book.category}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 
-  // If a book is open, show reading view
-  if (selectedBook) {
-    // Helper to normalize image URLs
-    const normalizeImageUrl = (imageUrl) => {
-      if (!imageUrl) return null;
-      
-      // Base64 data URL
-      if (imageUrl.startsWith('data:image/') || imageUrl.startsWith('data:application/')) {
-        return imageUrl;
-      }
-      
-      // Full URL
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
-      }
-      
-      // Base64 without prefix (fix it)
-      if (imageUrl.startsWith('/9j/') || imageUrl.startsWith('iVBORw0KGgo')) {
-        const mimeType = imageUrl.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
-        return `data:${mimeType};base64,${imageUrl}`;
-      }
-      
-      // Relative path
-      const baseUrl = getBaseBackendURL();
-      return baseUrl ? `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}` : imageUrl;
-    };
-    
-    const coverImage = normalizeImageUrl(selectedBook.coverImage);
-    const currentPageImage = selectedBook.pages?.[currentPage];
-    const pageImageUrl = normalizeImageUrl(currentPageImage);
+  const getCoverImageUrl = (coverImage) => {
+    if (!coverImage) return null;
+    if (coverImage.startsWith('data:image/') || coverImage.startsWith('data:application/')) {
+      return coverImage;
+    }
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return coverImage;
+    }
+    if (coverImage.startsWith('/9j/') || coverImage.startsWith('iVBORw0KGgo')) {
+      const mimeType = coverImage.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+      return `data:${mimeType};base64,${coverImage}`;
+    }
+    const baseUrl = getBaseBackendURL();
+    return baseUrl
+      ? `${baseUrl}${coverImage.startsWith('/') ? '' : '/'}${coverImage}`
+      : coverImage;
+  };
 
-    return (
-      <div className="fullscreen bg-gray-900 flex flex-col">
-        {/* Header */}
-        <div className="bg-black bg-opacity-50 text-white p-4 flex justify-between items-center">
-          <button
-            onClick={closeBook}
-            className="btn-large bg-primary-orange text-white text-xl"
-          >
-            ← Back
-          </button>
-          <h2 className="text-2xl font-bold">{selectedBook.title}</h2>
-          <div className="text-xl">
-            {currentPage + 1} / {selectedBook.pages.length + 1}
-          </div>
-        </div>
+  const changeAge = (ageId) => {
+    saveSelectedAge(ageId);
+    setSelectedCategory('');
+    setSearchQuery('');
+    setSelectedBook(null);
+    setSearchParams({ age: ageId });
+  };
 
-        {/* Book Content */}
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="page-container w-full h-full max-w-6xl">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ rotateY: 90, opacity: 0 }}
-                animate={{ rotateY: 0, opacity: 1 }}
-                exit={{ rotateY: -90, opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full h-full flex items-center justify-center"
-              >
-                {currentPage === 0 ? (
-                  <img
-                    src={coverImage}
-                    alt={selectedBook.title}
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                  />
-                ) : (
-                  <img
-                    src={pageImageUrl}
-                    alt={`Page ${currentPage}`}
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="bg-black bg-opacity-50 p-6 flex justify-center gap-8">
-          <button
-            onClick={prevPage}
-            disabled={currentPage === 0}
-            className={`btn-large ${
-              currentPage === 0
-                ? 'bg-gray-600 cursor-not-allowed'
-                : 'bg-primary-blue text-white'
-            }`}
-          >
-            ← Previous
-          </button>
-          <button
-            onClick={nextPage}
-            disabled={currentPage >= selectedBook.pages.length}
-            className={`btn-large ${
-              currentPage >= selectedBook.pages.length
-                ? 'bg-gray-600 cursor-not-allowed'
-                : 'bg-primary-green text-white'
-            }`}
-          >
-            Next →
-          </button>
-        </div>
-      </div>
-    );
+  if (!selectedAge) {
+    return null;
   }
 
-  // Book selection view
+  if (selectedBook) {
+    return <FlipBookReader book={selectedBook} onClose={() => setSelectedBook(null)} />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-50 to-orange-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-5xl font-bold text-primary-blue">📚 Choose a Book</h1>
-          <Link
-            to="/"
-            className="btn-large bg-primary-orange text-white"
-          >
-            Home
-          </Link>
+    <div className="site-shell">
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/75 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="w-11 h-11 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-soft"
+              title="Home"
+            >
+              <HomeIcon className="w-5 h-5" />
+            </Link>
+            <div>
+              <div className="font-display text-xl font-bold text-ink-900 leading-none">HKids</div>
+              <div className="text-sm text-ink-500 flex items-center gap-1.5 mt-1">
+                <Library className="w-3.5 h-3.5" />
+                Library
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`chip bg-white border border-ink-200 ${ageMeta?.accent || ''}`}>
+              <AgeIcon ageId={selectedAge} className="w-4 h-4" />
+              {ageMeta?.label || selectedAge}
+            </div>
+            <Link to="/" className="btn-ghost btn-large text-sm px-4 py-2 min-h-0">
+              <RefreshCcw className="w-4 h-4" />
+              Change age
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-8 animate-fade-up">
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-ink-900 mb-2">
+            Your library
+          </h1>
+          <p className="text-ink-500 text-lg">
+            Showing books for <span className="font-semibold text-brand-700">{ageMeta?.label}</span> only.
+          </p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-3xl p-6 mb-8 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Filter Books</h2>
-          <div className="flex flex-wrap gap-4">
-            {/* Age Group Filter */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Age Group</label>
+        <div className="surface-panel p-4 md:p-5 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-ink-500 mb-2">Search</label>
+              <div className="relative">
+                <Search className="w-5 h-5 text-ink-300 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by title or topic"
+                  className="field-input pl-12"
+                />
+              </div>
+            </div>
+
+            <div className="w-full lg:w-56">
+              <label className="block text-sm font-semibold text-ink-500 mb-2">Category</label>
+              <div className="relative">
+                <Filter className="w-4 h-4 text-ink-300 absolute left-4 top-1/2 -translate-y-1/2" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="field-input pl-10 appearance-none"
+                >
+                  <option value="">All categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="w-full lg:w-56">
+              <label className="block text-sm font-semibold text-ink-500 mb-2">Age group</label>
               <select
-                value={selectedAgeGroup || ''}
-                onChange={(e) => setSelectedAgeGroup(e.target.value || null)}
-                className="px-4 py-2 text-xl rounded-xl border-2 border-gray-300 focus:border-primary-blue"
+                value={selectedAge}
+                onChange={(e) => changeAge(e.target.value)}
+                className="field-input"
               >
-                <option value="">All Ages</option>
-                {ageGroups.map(age => (
-                  <option key={age} value={age}>Ages {age}</option>
+                {AGE_GROUPS.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.label}
+                  </option>
                 ))}
               </select>
             </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Category</label>
-              <select
-                value={selectedCategory || ''}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
-                className="px-4 py-2 text-xl rounded-xl border-2 border-gray-300 focus:border-primary-blue"
-              >
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Clear Filters */}
-            {(selectedAgeGroup || selectedCategory) && (
-              <button
-                onClick={() => {
-                  setSelectedAgeGroup(null);
-                  setSelectedCategory(null);
-                }}
-                className="btn-large bg-gray-300 text-gray-700 mt-6"
-              >
-                Clear Filters
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Books Grid */}
         {loading ? (
-          <div className="text-center text-3xl py-20">Loading books...</div>
+          <div className="text-center py-24 text-ink-500 text-xl">Loading books…</div>
         ) : filteredBooks.length === 0 ? (
-          <div className="text-center text-3xl py-20 text-gray-600">
-            No books found. Try different filters.
+          <div className="surface-panel p-12 text-center">
+            <BookOpen className="w-12 h-12 text-brand-500 mx-auto mb-4" />
+            <h2 className="font-display text-2xl font-bold mb-2">No books in this age group yet</h2>
+            <p className="text-ink-500 mb-6">Try another age group, or ask an admin to publish books.</p>
+            <Link to="/" className="btn-primary btn-large">
+              Choose another age
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book) => {
-              // Handle base64 images or URLs
-              const getCoverImageUrl = () => {
-                if (!book.coverImage) return null;
-                
-                // Base64 data URL
-                if (book.coverImage.startsWith('data:image/') || book.coverImage.startsWith('data:application/')) {
-                  return book.coverImage;
-                }
-                
-                // Full URL
-                if (book.coverImage.startsWith('http://') || book.coverImage.startsWith('https://')) {
-                  return book.coverImage;
-                }
-                
-                // Base64 without prefix (fix it)
-                if (book.coverImage.startsWith('/9j/') || book.coverImage.startsWith('iVBORw0KGgo')) {
-                  const mimeType = book.coverImage.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
-                  return `data:${mimeType};base64,${book.coverImage}`;
-                }
-                
-                // Relative path
-                const baseUrl = getBaseBackendURL();
-                return baseUrl ? `${baseUrl}${book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage}` : book.coverImage;
-              };
-              
-              const coverImageUrl = getCoverImageUrl();
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredBooks.map((book, index) => {
+              const coverImageUrl = getCoverImageUrl(book.coverImage);
               return (
-                <motion.div
+                <motion.button
                   key={book._id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-white rounded-3xl p-6 shadow-lg cursor-pointer"
-                  onClick={() => {
-                    // Use book data directly (pages are now included in published books)
-                    openBook(book);
-                  }}
+                  type="button"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.04, 0.3) }}
+                  whileHover={{ y: -4 }}
+                  onClick={() => setSelectedBook(book)}
+                  className="text-left surface-panel overflow-hidden group"
                 >
-                  {coverImageUrl ? (
-                    <img
-                      src={coverImageUrl}
-                      alt={book.title}
-                      className="w-full h-64 object-cover rounded-2xl mb-4"
-                      onError={(e) => {
-                        console.error('Image load error for book:', book.title, coverImageUrl?.substring(0, 50));
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-gradient-to-br from-primary-blue to-primary-green flex items-center justify-center rounded-2xl mb-4 text-6xl">
-                      📚
-                    </div>
-                  )}
-                  <h3 className="text-2xl font-bold mb-2">{book.title}</h3>
-                  <p className="text-gray-600 mb-3 line-clamp-2">{book.description}</p>
-                  <div className="flex gap-2">
-                    <span className="px-3 py-1 bg-primary-blue text-white rounded-full text-sm">
-                      Ages {book.ageGroup}
-                    </span>
-                    <span className="px-3 py-1 bg-primary-green text-white rounded-full text-sm">
-                      {book.category}
-                    </span>
+                  <div className="relative h-56 bg-ink-100 overflow-hidden">
+                    {coverImageUrl ? (
+                      <img
+                        src={coverImageUrl}
+                        alt={book.title}
+                        className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+                        <BookOpen className="w-12 h-12" />
+                      </div>
+                    )}
                   </div>
-                </motion.div>
+                  <div className="p-5">
+                    <h3 className="font-display text-xl font-bold text-ink-900 mb-2 line-clamp-2">
+                      {book.title}
+                    </h3>
+                    <p className="text-ink-500 mb-4 line-clamp-2 text-sm leading-relaxed">
+                      {book.description || 'Open this book to start reading.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="chip bg-brand-50 text-brand-700">
+                        <AgeIcon ageId={book.ageGroup} className="w-3.5 h-3.5" />
+                        {getAgeGroup(book.ageGroup)?.shortLabel || book.ageGroup}
+                      </span>
+                      <span className="chip bg-ink-100 text-ink-700">{book.category}</span>
+                      <span className="chip bg-white border border-ink-200 text-ink-500">
+                        {book.pages?.length || 0} pages
+                      </span>
+                    </div>
+                  </div>
+                </motion.button>
               );
             })}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };

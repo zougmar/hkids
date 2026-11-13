@@ -42,6 +42,13 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'Please provide title, ageGroup, and category' });
       }
 
+      const allowedAgeGroups = ['3-5', '6-8', '9-12', '13-15', '16+'];
+      if (!allowedAgeGroups.includes(ageGroup)) {
+        return res.status(400).json({
+          message: `Invalid age group. Allowed: ${allowedAgeGroups.join(', ')}`
+        });
+      }
+
       if (!coverImage) {
         return res.status(400).json({ message: 'Cover image is required' });
       }

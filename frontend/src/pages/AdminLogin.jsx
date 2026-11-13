@@ -1,48 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Shield,
+  Mail,
+  Lock,
+  ArrowLeft,
+  Loader2,
+  Eye,
+  EyeOff,
+  Library
+} from 'lucide-react';
 import { useAuth } from '../services/AuthContext';
-import { healthCheck } from '../services/api';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [backendStatus, setBackendStatus] = useState('checking');
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // Check backend connection on mount
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await healthCheck();
-        if (response.data?.status === 'OK') {
-          setBackendStatus('connected');
-          return;
-        }
-        setBackendStatus('disconnected');
-      } catch (error) {
-        console.error('Backend check failed:', error);
-        const errorData = error.response?.data;
-        console.error('Error details:', {
-          message: error.message,
-          status: error.response?.status,
-          error: errorData?.error,
-          hint: errorData?.hint,
-          url: error.config?.url
-        });
-        
-        // Show specific error message if available
-        if (errorData?.hint) {
-          console.error('💡 Hint:', errorData.hint);
-        }
-        
-        setBackendStatus('disconnected');
-      }
-    };
-    checkBackend();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,110 +28,151 @@ const AdminLogin = () => {
 
     try {
       const result = await login(email, password);
-
       if (result.success) {
         navigate('/admin/dashboard');
       } else {
-        setError(result.message || 'Login failed. Please check your credentials.');
+        setError(result.message || 'Invalid email or password.');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Unable to connect to server. Please make sure the backend is running.');
+      setError('Unable to sign in right now. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-        <h1 className="text-4xl font-bold text-center text-primary-blue mb-2">
-          🔐 Admin Login
-        </h1>
-        <p className="text-center text-gray-600 mb-8">
-          HKids Content Management
-        </p>
-
-        {/* Backend Status Indicator */}
-        {backendStatus === 'checking' && (
-          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-xl text-sm">
-            Checking backend connection...
-          </div>
-        )}
-        {backendStatus === 'disconnected' && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-xl text-sm">
-            ⚠️ Cannot connect to backend server. Please check:
-            <ul className="list-disc list-inside mt-2 ml-2">
-              <li>API routes are deployed correctly</li>
-              <li>MongoDB connection is configured</li>
-              <li>Environment variables are set in Vercel</li>
-              <li>Check browser console (F12) for error details</li>
-            </ul>
-            <p className="mt-2 text-xs">
-              Try visiting: <code className="bg-red-200 px-1 rounded">/api/health</code> directly
-            </p>
-          </div>
-        )}
-        {backendStatus === 'connected' && (
-          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-xl text-sm">
-            ✅ Backend connected
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl">
-              {error}
+    <div className="min-h-screen grid lg:grid-cols-2 bg-ink-50">
+      {/* Brand panel */}
+      <aside className="relative hidden lg:flex flex-col justify-between p-10 text-white overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(145deg, rgba(8, 145, 178, 0.92), rgba(15, 118, 110, 0.88)), url(/images/hkids-kids-bg.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
+              <Library className="w-5 h-5" />
             </div>
-          )}
-
-          <div>
-            <label className="block text-lg font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-primary-blue focus:outline-none"
-              placeholder="admin@hkids.com"
-            />
+            <span className="font-display text-2xl font-bold tracking-tight">HKids</span>
           </div>
-
-          <div>
-            <label className="block text-lg font-medium mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-primary-blue focus:outline-none"
-              placeholder="Enter password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-large bg-primary-blue text-white disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <a href="/" className="text-primary-blue hover:underline">
-            ← Back to Home
-          </a>
         </div>
 
-        <div className="mt-8 p-4 bg-blue-50 rounded-xl">
-          <p className="text-sm text-gray-600">
-            <strong>Demo Credentials:</strong><br />
-            Email: admin@hkids.com<br />
-            Password: admin123
+        <div className="relative z-10 max-w-md">
+          <h2 className="font-display text-4xl xl:text-5xl font-bold leading-tight mb-4">
+            Manage your digital library with clarity.
+          </h2>
+          <p className="text-white/80 text-lg leading-relaxed">
+            Sign in to publish books, organize age groups, and keep reading experiences polished for every learner.
           </p>
         </div>
-      </div>
+
+        <p className="relative z-10 text-sm text-white/65">
+          Secure admin access for content editors
+        </p>
+      </aside>
+
+      {/* Form panel */}
+      <main className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-[420px]">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-ink-500 hover:text-brand-700 mb-8 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+
+          <div className="mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center mb-5 shadow-soft lg:hidden">
+              <Shield className="w-6 h-6" />
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-ink-900 tracking-tight mb-2">
+              Welcome back
+            </h1>
+            <p className="text-ink-500 text-base">
+              Sign in to the HKids admin workspace.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-2xl text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="admin-email" className="block text-sm font-semibold text-ink-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-ink-300 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  id="admin-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className="field-input pl-11"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="admin-password" className="block text-sm font-semibold text-ink-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-ink-300 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  id="admin-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="field-input pl-11 pr-12"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl text-ink-400 hover:text-ink-700 hover:bg-ink-100 flex items-center justify-center transition"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full btn-primary btn-large disabled:opacity-50 mt-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  <Shield className="w-5 h-5" />
+                  Sign in
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </main>
     </div>
   );
 };

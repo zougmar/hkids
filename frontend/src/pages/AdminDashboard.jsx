@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Plus,
+  LogOut,
+  BookOpen,
+  CheckCircle2,
+  FileWarning,
+  Home
+} from 'lucide-react';
 import { useAuth } from '../services/AuthContext';
 import { booksAPI } from '../services/api';
 import BookForm from '../components/BookForm';
@@ -64,68 +73,85 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  const publishedCount = books.filter((b) => b.isPublished).length;
+  const draftCount = books.filter((b) => !b.isPublished).length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-50 to-orange-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-3xl shadow-lg p-6 mb-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-primary-blue">📚 Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome, {user?.username}</p>
+    <div className="site-shell">
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/75 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-brand-600 text-white flex items-center justify-center">
+              <LayoutDashboard className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-ink-900">Admin dashboard</h1>
+              <p className="text-sm text-ink-500">Welcome, {user?.username}</p>
+            </div>
           </div>
-          <div className="flex gap-4">
-            <button
-              onClick={handleCreate}
-              className="btn-large bg-primary-green text-white"
-            >
-              + Add Book
+
+          <div className="flex flex-wrap gap-2">
+            <Link to="/" className="btn-ghost btn-large text-base min-h-0 py-2.5 px-4">
+              <Home className="w-4 h-4" />
+              Site
+            </Link>
+            <button onClick={handleCreate} className="btn-success btn-large text-base min-h-0 py-2.5 px-4">
+              <Plus className="w-4 h-4" />
+              Add book
             </button>
-            <button
-              onClick={handleLogout}
-              className="btn-large bg-primary-orange text-white"
-            >
+            <button onClick={handleLogout} className="btn-accent btn-large text-base min-h-0 py-2.5 px-4">
+              <LogOut className="w-4 h-4" />
               Logout
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="text-3xl font-bold text-primary-blue">{books.length}</div>
-            <div className="text-gray-600">Total Books</div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="text-3xl font-bold text-primary-green">
-              {books.filter(b => b.isPublished).length}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="surface-panel p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center">
+              <BookOpen className="w-6 h-6" />
             </div>
-            <div className="text-gray-600">Published</div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="text-3xl font-bold text-primary-orange">
-              {books.filter(b => !b.isPublished).length}
+            <div>
+              <div className="font-display text-3xl font-bold text-ink-900">{books.length}</div>
+              <div className="text-ink-500">Total books</div>
             </div>
-            <div className="text-gray-600">Unpublished</div>
+          </div>
+          <div className="surface-panel p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-green-50 text-accent-leaf flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="font-display text-3xl font-bold text-ink-900">{publishedCount}</div>
+              <div className="text-ink-500">Published</div>
+            </div>
+          </div>
+          <div className="surface-panel p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-accent-coral flex items-center justify-center">
+              <FileWarning className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="font-display text-3xl font-bold text-ink-900">{draftCount}</div>
+              <div className="text-ink-500">Drafts</div>
+            </div>
           </div>
         </div>
 
-        {/* Books List */}
         {loading ? (
-          <div className="text-center text-3xl py-20">Loading books...</div>
+          <div className="text-center text-ink-500 text-xl py-20">Loading books…</div>
         ) : books.length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
-            <div className="text-6xl mb-4">📖</div>
-            <h2 className="text-2xl font-bold mb-2">No books yet</h2>
-            <p className="text-gray-600 mb-6">Get started by adding your first book!</p>
-            <button
-              onClick={handleCreate}
-              className="btn-large bg-primary-green text-white"
-            >
-              + Add First Book
+          <div className="surface-panel p-12 text-center">
+            <BookOpen className="w-12 h-12 text-brand-500 mx-auto mb-4" />
+            <h2 className="font-display text-2xl font-bold mb-2">No books yet</h2>
+            <p className="text-ink-500 mb-6">Upload your first PDF or page set to get started.</p>
+            <button onClick={handleCreate} className="btn-success btn-large">
+              <Plus className="w-5 h-5" />
+              Add first book
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {books.map((book) => (
               <BookCard
                 key={book._id}
@@ -136,16 +162,15 @@ const AdminDashboard = () => {
             ))}
           </div>
         )}
+      </main>
 
-        {/* Book Form Modal */}
-        {showForm && (
-          <BookForm
-            book={editingBook}
-            onClose={handleFormClose}
-            onSuccess={handleFormClose}
-          />
-        )}
-      </div>
+      {showForm && (
+        <BookForm
+          book={editingBook}
+          onClose={handleFormClose}
+          onSuccess={handleFormClose}
+        />
+      )}
     </div>
   );
 };

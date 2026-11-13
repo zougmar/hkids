@@ -105,7 +105,36 @@ const seedDatabase = async () => {
           '/uploads/placeholder-page-5-3.jpg'
         ],
         fileType: 'images',
-        isPublished: false, // Unpublished example
+        isPublished: false,
+        uploadedBy: admin._id
+      },
+      {
+        title: 'Teen Voices',
+        description: 'Stories about friendship, identity, and growing up',
+        ageGroup: '13-15',
+        category: 'Coming of Age',
+        coverImage: '/uploads/placeholder-cover-6.jpg',
+        pages: [
+          '/uploads/placeholder-page-6-1.jpg',
+          '/uploads/placeholder-page-6-2.jpg',
+          '/uploads/placeholder-page-6-3.jpg'
+        ],
+        fileType: 'images',
+        isPublished: true,
+        uploadedBy: admin._id
+      },
+      {
+        title: 'Quiet Hours',
+        description: 'Short reflective reads for adult evenings',
+        ageGroup: '16+',
+        category: 'Fiction',
+        coverImage: '/uploads/placeholder-cover-7.jpg',
+        pages: [
+          '/uploads/placeholder-page-7-1.jpg',
+          '/uploads/placeholder-page-7-2.jpg'
+        ],
+        fileType: 'images',
+        isPublished: true,
         uploadedBy: admin._id
       }
     ];
